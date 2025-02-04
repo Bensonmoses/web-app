@@ -4,8 +4,8 @@ import os
 
 app = Flask(__name__)
 
-# Azure Blob Storage Connection String (Replace with your actual SAS connection string)
-AZURE_STORAGE_CONNECTION_STRING = "BlobEndpoint=https://aiclonefiles.blob.core.windows.net/;QueueEndpoint=https://aiclonefiles.queue.core.windows.net/;FileEndpoint=https://aiclonefiles.file.core.windows.net/;TableEndpoint=https://aiclonefiles.table.core.windows.net/;SharedAccessSignature=sv=2022-11-02&ss=bfqt&srt=sco&sp=rwdlacupiytfx&se=2025-05-01T02:08:30Z&st=2025-02-04T19:08:30Z&spr=https&sig=OvBpGJIa1fe3DdAwK9Gk7oa4pPk5i%2B2wrfjx%2F7Mbx6s%3D"
+# Azure Blob Storage Connection String (Replace with your actual connection string)
+AZURE_STORAGE_CONNECTION_STRING = "YOUR_AZURE_STORAGE_CONNECTION_STRING"
 blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
 
 # Allowed containers in Azure Blob Storage
@@ -37,6 +37,10 @@ def upload_file_to_azure(file, container_name):
 def upload_file():
     """Handle file upload request."""
     message = ""
+
+    # Debugging: Print allowed containers to check if it's available
+    print("DEBUG: Allowed Containers ->", ALLOWED_CONTAINERS)
+
     if request.method == "POST":
         if "file" not in request.files or "container" not in request.form:
             message = "❌ No file or container selected!"
