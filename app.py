@@ -1,10 +1,10 @@
-from flask import Flask, request, redirect, render_template
+from flask import Flask, request, render_template
 from azure.storage.blob import BlobServiceClient
 import os
 
 app = Flask(__name__)
 
-# Azure Blob Storage Connection String (Replace with your actual connection string)
+# Azure Blob Storage Connection String (Replace with your actual SAS connection string)
 AZURE_STORAGE_CONNECTION_STRING = "YOUR_AZURE_STORAGE_CONNECTION_STRING"
 blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
 
@@ -31,20 +31,25 @@ def upload_file_to_azure(file, container_name):
 
     # Upload new file
     blob_client.upload_blob(file, overwrite=True)
-    return f"File '{file.filename}' uploaded to {container_name} container successfully!"
+    return f"✅ File '{file.filename}' uploaded to {container_name} successfully!"
 
 @app.route("/", methods=["GET", "POST"])
 def upload_file():
     """Handle file upload request."""
+    message = ""
     if request.method == "POST":
-        file = request.files["file"]
-        container_name = request.form["container"]
+        if "file" not in request.files or "container" not in request.form:
+            message = "❌ No file or container selected!"
+        else:
+            file = request.files["file"]
+            container_name = request.form["container"]
 
-        if file and allowed_file(file.filename) and container_name in ALLOWED_CONTAINERS:
-            message = upload_file_to_azure(file, container_name)
-            return render_template("index.html", message=message)
+            if file and allowed_file(file.filename) and container_name in ALLOWED_CONTAINERS:
+                message = upload_file_to_azure(file, container_name)
+            else:
+                message = "❌ Invalid file type or container name."
 
-    return render_template("index.html")
+    return render_template("index.html", message=message, allowed_containers=ALLOWED_CONTAINERS)
 
 if __name__ == "__main__":
     app.run(debug=True)
