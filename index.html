@@ -1,58 +1,50 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Upload to Azure</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-        }
-        .section {
-            margin-bottom: 30px;
-        }
-        .section h2 {
-            color: #4CAF50;
-        }
-        input[type="file"] {
-            padding: 10px;
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
-    <h1>Upload Files to Azure Blob Storage</h1>
+from flask import Flask, request, redirect, render_template
+from azure.storage.blob import BlobServiceClient
+import os
 
-    <!-- Image Upload -->
-    <form action="/upload" method="POST" enctype="multipart/form-data">
-        <div class="section">
-            <h2>Upload an Image</h2>
-            <input type="file" name="file" accept="image/*" required>
-            <input type="hidden" name="container" value="ai-clone-images">
-            <button type="submit">Upload to Images</button>
-        </div>
-    </form>
+app = Flask(__name__)
 
-    <!-- Video Upload -->
-    <form action="/upload" method="POST" enctype="multipart/form-data">
-        <div class="section">
-            <h2>Upload a Video</h2>
-            <input type="file" name="file" accept="video/*" required>
-            <input type="hidden" name="container" value="ai-clone-videos">
-            <button type="submit">Upload to Videos</button>
-        </div>
-    </form>
+# Azure Blob Storage Connection String (Replace with your actual connection string)
+AZURE_STORAGE_CONNECTION_STRING = "YOUR_AZURE_STORAGE_CONNECTION_STRING"
+blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
 
-    <!-- Audio Upload -->
-    <form action="/upload" method="POST" enctype="multipart/form-data">
-        <div class="section">
-            <h2>Upload an Audio</h2>
-            <input type="file" name="file" accept="audio/*" required>
-            <input type="hidden" name="container" value="ai-clone-audios">
-            <button type="submit">Upload to Audios</button>
-        </div>
-    </form>
+# Allowed containers in Azure Blob Storage
+ALLOWED_CONTAINERS = ["ai-clone-images", "ai-clone-videos", "ai-clone-audios"]
 
-</body>
-</html>
+# Allowed file extensions
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "mp4", "mp3", "wav", "avi"}
+
+def allowed_file(filename):
+    """Check if the file extension is allowed."""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def upload_file_to_azure(file, container_name):
+    """Upload the file to Azure Blob Storage, replacing it if it already exists."""
+    blob_client = blob_service_client.get_blob_client(container=container_name, blob=file.filename)
+
+    # Delete existing file before uploading new one
+    try:
+        blob_client.delete_blob()
+        print(f"Existing file '{file.filename}' deleted.")
+    except Exception as e:
+        print(f"No existing file found: {e}")
+
+    # Upload new file
+    blob_client.upload_blob(file, overwrite=True)
+    return f"File '{file.filename}' uploaded to {container_name} container successfully!"
+
+@app.route("/", methods=["GET", "POST"])
+def upload_file():
+    """Handle file upload request."""
+    if request.method == "POST":
+        file = request.files["file"]
+        container_name = request.form["container"]
+
+        if file and allowed_file(file.filename) and container_name in ALLOWED_CONTAINERS:
+            message = upload_file_to_azure(file, container_name)
+            return render_template("index.html", message=message)
+
+    return render_template("index.html")
+
+if __name__ == "__main__":
+    app.run(debug=True)
