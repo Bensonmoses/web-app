@@ -38,5 +38,13 @@
 
         <button type="submit">Upload</button>
     </form>
+
+    <!-- Debugging Output -->
+    <p>Debug Info: Allowed Containers</p>
+    <ul>
+        {% for container in allowed_containers %}
+            <li>{{ container }}</li>
+        {% endfor %}
+    </ul>
 </body>
 </html>
