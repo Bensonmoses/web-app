@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Images</title>
+</head>
+<body>
+    <h1>Uploaded Images</h1>
+    <div id="imageContainer"></div>
+
+    <script>
+        fetch("/list-files/image/")
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById("imageContainer");
+                data.files.forEach(fileName => {
+                    const img = document.createElement("img");
+                    img.src = `https://youraccount.blob.core.windows.net/ai-clone-image/${fileName}`;
+                    img.style.width = "200px";
+                    img.style.margin = "10px";
+                    container.appendChild(img);
+                });
+            });
+    </script>
+</body>
+</html>
